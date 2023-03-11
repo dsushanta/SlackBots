@@ -2,7 +2,7 @@ name: Birthday Wishing SlackBot
 
 on:
   schedule:
-    - cron: '*/2 * * * *'
+    - cron: '43 21 * * *'
 
 jobs:
   build:
