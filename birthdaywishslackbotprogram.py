@@ -1,9 +1,16 @@
 import random
 import ssl
 import certifi
+import base64
 # from slack import WebClient
 from slack_sdk import WebClient
 from datetime import date, datetime
+
+
+def decode(encoded_text):
+    base64_bytes = encoded_text.encode("ascii")
+    sample_string_bytes = base64.b64decode(base64_bytes)
+    return sample_string_bytes.decode("ascii")
 
 
 def getCurrentDay():
@@ -18,10 +25,10 @@ def getCurrentMonth():
 
 def getDisplayNamesOfBirthdayPersons():
     ssl_context = ssl.create_default_context(cafile=certifi.where())
-    slack_client = WebClient(BOT_TOKEN, ssl=ssl_context)
-    slack_client_without_bot_token = WebClient(AUTH_TOKEN, ssl=ssl_context)
-    # slack_client = WebClient(BOT_TOKEN)
-    # slack_client_without_bot_token = WebClient(AUTH_TOKEN)
+    slack_client = WebClient(decode(BOT_TOKEN), ssl=ssl_context)
+    slack_client_without_bot_token = WebClient(decode(AUTH_TOKEN), ssl=ssl_context)
+    # slack_client = WebClient(decode(BOT_TOKEN))
+    # slack_client_without_bot_token = WebClient(decode(AUTH_TOKEN))
     slack_client.rtm_connect()
     user_list_str = slack_client.users_list()
     users = user_list_str.get('members')
@@ -54,8 +61,8 @@ def getDisplayNamesOfBirthdayPersons():
 
 def postBirthdayWishes():
     ssl_context = ssl.create_default_context(cafile=certifi.where())
-    slack_client = WebClient(BOT_TOKEN, ssl=ssl_context)
-    # slack_client = WebClient(BOT_TOKEN)
+    slack_client = WebClient(decode(BOT_TOKEN), ssl=ssl_context)
+    # slack_client = WebClient(decode(BOT_TOKEN))
     slack_client.rtm_connect()
     for id, first_name in birthday_persons.items():
         random_number = random.randint(0, len(MODIFIED_BIRTHDAY_WISHES)-1)
@@ -87,11 +94,8 @@ def postBirthdayWishes():
 BIRTHDAY_FORMAT = '%Y-%m-%d'
 
 # settings for TestVagrant
-AUTH_TOKEN = 'xoxp-10189127591-646277697476-5144997657735-583d3f10cae0c7b829db7291f2775a38'
-BOT_TOKEN = 'xoxb-10189127591-790313797619-T9Svt2q7pNSlpWvGFez5Wl5g'
-
-# AUTH_TOKEN = 'xoxp-10189127591-646277697476-854700790421-1fa318a8c54d80b97c00250db5881b87'
-# BOT_TOKEN = 'xoxb-10189127591-790313797619-ay83iRVEgYG5zkNKxLlN3Ix7'
+AUTH_TOKEN = 'eG94cC0xMDE4OTEyNzU5MS02NDYyNzc2OTc0NzYtNTE4MzI1NjgxMTk1Mi1jMzk2MTNjOTQxZmM0YmVlODUzZjA5YmZmODA2MWQzNg=='
+BOT_TOKEN = 'eG94Yi0xMDE4OTEyNzU5MS03OTAzMTM3OTc2MTktY0RiSVh1YnB1OXA5Y3Q0WEJLcHZjOGNk'
 
 
 # CHANNEL_NAME = 'general'
