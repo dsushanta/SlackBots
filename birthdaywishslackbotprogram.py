@@ -1,6 +1,7 @@
 import random
 import ssl
 import certifi
+# from slack import WebClient
 from slack_sdk import WebClient
 from datetime import date, datetime
 
@@ -19,6 +20,8 @@ def getDisplayNamesOfBirthdayPersons():
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     slack_client = WebClient(BOT_TOKEN, ssl=ssl_context)
     slack_client_without_bot_token = WebClient(AUTH_TOKEN, ssl=ssl_context)
+    # slack_client = WebClient(BOT_TOKEN)
+    # slack_client_without_bot_token = WebClient(AUTH_TOKEN)
     slack_client.rtm_connect()
     user_list_str = slack_client.users_list()
     users = user_list_str.get('members')
@@ -52,42 +55,46 @@ def getDisplayNamesOfBirthdayPersons():
 def postBirthdayWishes():
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     slack_client = WebClient(BOT_TOKEN, ssl=ssl_context)
+    # slack_client = WebClient(BOT_TOKEN)
     slack_client.rtm_connect()
-    # for id, first_name in birthday_persons.items():
-    #     random_number = random.randint(0, len(MODIFIED_BIRTHDAY_WISHES)-1)
-    #     birthday_wish = MODIFIED_BIRTHDAY_WISHES[random_number]
-    #     random_number = random.randint(0, len(BIRTHDAY_IMAGE_URLS) - 1)
-    #     image_url = BIRTHDAY_IMAGE_URLS[random_number]
-    #     message = template.replace("REPLACE_WITH_WISH", birthday_wish)
-    #     message = message.replace("REPLACE_WITH_IMAGE_URL", image_url)
-    #     # message = message % (first_name, id)
-    #     idd = 'UK085LHE0'
-    #     namee = 'Sushant'
-    #     message = message % (namee, idd)
-    #     slack_client.chat_postMessage(
-    #         channel=CHANNEL_NAME,
-    #         blocks=message)
+    for id, first_name in birthday_persons.items():
+        random_number = random.randint(0, len(MODIFIED_BIRTHDAY_WISHES)-1)
+        birthday_wish = MODIFIED_BIRTHDAY_WISHES[random_number]
+        random_number = random.randint(0, len(BIRTHDAY_IMAGE_URLS) - 1)
+        image_url = BIRTHDAY_IMAGE_URLS[random_number]
+        message = template.replace("REPLACE_WITH_WISH", birthday_wish)
+        message = message.replace("REPLACE_WITH_IMAGE_URL", image_url)
+        # message = message % (first_name, id)
+        slack_client.chat_postMessage(
+            channel=CHANNEL_NAME,
+            text='',
+            blocks=message)
 
-    random_number = random.randint(0, len(MODIFIED_BIRTHDAY_WISHES)-1)
-    birthday_wish = MODIFIED_BIRTHDAY_WISHES[random_number]
-    random_number = random.randint(0, len(BIRTHDAY_IMAGE_URLS) - 1)
-    image_url = BIRTHDAY_IMAGE_URLS[random_number]
-    message = template.replace("REPLACE_WITH_WISH", birthday_wish)
-    message = message.replace("REPLACE_WITH_IMAGE_URL", image_url)
-    # message = message % (first_name, id)
-    idd = 'UK085LHE0'
-    namee = 'Sushant'
-    message = message % (namee, idd)
-    slack_client.chat_postMessage(
-        channel=CHANNEL_NAME,
-        blocks=message)
+    # random_number = random.randint(0, len(MODIFIED_BIRTHDAY_WISHES)-1)
+    # birthday_wish = MODIFIED_BIRTHDAY_WISHES[random_number]
+    # random_number = random.randint(0, len(BIRTHDAY_IMAGE_URLS) - 1)
+    # image_url = BIRTHDAY_IMAGE_URLS[random_number]
+    # message = template.replace("REPLACE_WITH_WISH", birthday_wish)
+    # message = message.replace("REPLACE_WITH_IMAGE_URL", image_url)
+    # # message = message % (first_name, id)
+    # idd = 'UK085LHE0'
+    # namee = 'Sushant'
+    # message = message % (namee, idd)
+    # slack_client.chat_postMessage(
+    #     channel=CHANNEL_NAME,
+    #     blocks=message)
 
 
 BIRTHDAY_FORMAT = '%Y-%m-%d'
 
 # settings for TestVagrant
-AUTH_TOKEN = 'xoxp-10189127591-646277697476-854700790421-1fa318a8c54d80b97c00250db5881b87'
-BOT_TOKEN = 'xoxb-10189127591-790313797619-ay83iRVEgYG5zkNKxLlN3Ix7'
+AUTH_TOKEN = 'xoxp-10189127591-646277697476-5133120694147-740f1ea35233c34943e5d052e4fb437d'
+BOT_TOKEN = 'xoxb-10189127591-790313797619-pbyvGKkjBi7LoF811c3ijVxN'
+
+# AUTH_TOKEN = 'xoxp-10189127591-646277697476-854700790421-1fa318a8c54d80b97c00250db5881b87'
+# BOT_TOKEN = 'xoxb-10189127591-790313797619-ay83iRVEgYG5zkNKxLlN3Ix7'
+
+
 # CHANNEL_NAME = 'general'
 CHANNEL_NAME = 'testing-bday-slackbot'
 
