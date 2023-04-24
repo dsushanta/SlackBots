@@ -67,7 +67,6 @@ def postBirthdayWishes():
         # message = message % (first_name, id)
         slack_client.chat_postMessage(
             channel=CHANNEL_NAME,
-            text='',
             blocks=message)
 
     # random_number = random.randint(0, len(MODIFIED_BIRTHDAY_WISHES)-1)
@@ -88,8 +87,8 @@ def postBirthdayWishes():
 BIRTHDAY_FORMAT = '%Y-%m-%d'
 
 # settings for TestVagrant
-AUTH_TOKEN = 'xoxp-10189127591-646277697476-5133120694147-740f1ea35233c34943e5d052e4fb437d'
-BOT_TOKEN = 'xoxb-10189127591-790313797619-pbyvGKkjBi7LoF811c3ijVxN'
+AUTH_TOKEN = 'xoxp-10189127591-646277697476-5144997657735-583d3f10cae0c7b829db7291f2775a38'
+BOT_TOKEN = 'xoxb-10189127591-790313797619-T9Svt2q7pNSlpWvGFez5Wl5g'
 
 # AUTH_TOKEN = 'xoxp-10189127591-646277697476-854700790421-1fa318a8c54d80b97c00250db5881b87'
 # BOT_TOKEN = 'xoxb-10189127591-790313797619-ay83iRVEgYG5zkNKxLlN3Ix7'
