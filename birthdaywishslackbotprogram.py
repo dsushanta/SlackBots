@@ -2,7 +2,7 @@ import random
 import ssl
 import certifi
 import base64
-# from slack import WebClient
+import requests
 from slack_sdk import WebClient
 from datetime import date, datetime
 
@@ -23,46 +23,117 @@ def getCurrentMonth():
     return today.month
 
 
-def getDisplayNamesOfBirthdayPersons():
-    ssl_context = ssl.create_default_context(cafile=certifi.where())
-    slack_client = WebClient(decode(BOT_TOKEN), ssl=ssl_context)
-    slack_client_without_bot_token = WebClient(decode(AUTH_TOKEN), ssl=ssl_context)
-    # slack_client = WebClient(decode(BOT_TOKEN))
-    # slack_client_without_bot_token = WebClient(decode(AUTH_TOKEN))
-    slack_client.rtm_connect()
-    user_list_str = slack_client.users_list()
-    users = user_list_str.get('members')
+def generateAccessTokenFromRefreshToken():
+    client_id = decode(CLIENT_ID)
+    client_secret = decode(CLIENT_SECRET)
+    refresh_token = decode(REFRESH_TOKEN)
+    url = TOKEN_API
+    params = {'refresh_token': refresh_token, 'client_id': client_id, 'client_secret': client_secret, 'grant_type': 'refresh_token'}
+    # url = 'https://accounts.zoho.com/oauth/v2/token?refresh_token=%s&client_id=%s&client_secret=%s&grant_type=refresh_token' % (refresh_token, client_id, client_secret)
+    response = requests.post(url, params=params, headers={'Accept': 'application/json'})
+    return response.json().get('access_token')
+
+
+def getDisplayNamesOfBirthdayPersonsFromZoho():
+    url = EMPLOYEE_RECORD_API
+    access_token = generateAccessTokenFromRefreshToken()
+    headers = {'Accept': 'application/json', 'Authorization': 'Zoho-oauthtoken %s' % access_token}
+    response = requests.get(url, headers=headers)
+    users = response.json()
     for user in users:
-        try:
-            status = user.get('deleted')
-            if status:
-                continue
-            is_bot = user.get('is_bot')
-            if is_bot:
-                continue
-            user_id = user.get('id')
-            name = user.get('name')
-            first_name = user.get('profile').get('first_name')
-            user_info = slack_client_without_bot_token.users_profile_get(user=user_id)
-            bday_string = user_info.get('profile').get('fields').get('XfNVGXDAS1').get('value')
+        employeeID = user.get('EmployeeID')
+        if employeeID.isnumeric():
+            bday_string = user.get('Birth Date')
+            email_id = user.get('Email ID')
             date_object = datetime.strptime(bday_string, BIRTHDAY_FORMAT).date()
             day = date_object.day
             month = date_object.month
 
             if month == getCurrentMonth() and day == getCurrentDay():
-                birthday_persons['<@'+user_id+'>'] = first_name
-        except AttributeError:
-            print('User %s has not set birth date' % name)
-            continue
-        except ValueError:
-            print('Invalid date format : %s , moving on ' % bday_string)
-            continue
+                birthday_persons_emails.append(email_id)
+
+
+def fetchSlackUserIdOfBirthdayPersons():
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+    slack_client = WebClient(decode(BOT_TOKEN), ssl=ssl_context)
+    slack_client.rtm_connect()
+    user_list_str = slack_client.users_list()
+    users = user_list_str.get('members')
+    for user in users:
+        email = user.get('profile').get('email')
+        if birthday_persons_emails.count(email) > 0:
+            # user_id = user.get('id')
+            user_id = 'UK085LHE0'
+            first_name = user.get('profile').get('first_name')
+            birthday_persons['<@'+user_id+'>'] = first_name
+
+
+
+# def getEmailFromSlack():
+#     ssl_context = ssl.create_default_context(cafile=certifi.where())
+#     slack_client = WebClient(decode(BOT_TOKEN), ssl=ssl_context)
+#     slack_client_without_bot_token = WebClient(decode(AUTH_TOKEN), ssl=ssl_context)
+#     # slack_client = WebClient(decode(BOT_TOKEN))
+#     # slack_client_without_bot_token = WebClient(decode(AUTH_TOKEN))
+#     slack_client.rtm_connect()
+#     user_list_str = slack_client.users_list()
+#     users = user_list_str.get('members')
+#     for user in users:
+#         name = user.get('name')
+#         email = user.get('profile').get('email')
+#         print('%s : %s' % (name, email))
+#
+#
+# def getDeactivatedUsersFromSlack():
+#     ssl_context = ssl.create_default_context(cafile=certifi.where())
+#     slack_client = WebClient(decode(BOT_TOKEN), ssl=ssl_context)
+#     slack_client.rtm_connect()
+#     user_list_str = slack_client.users_list()
+#     users = user_list_str.get('members')
+#     for user in users:
+#         if user.get('deleted'):
+#             print('%s' % user.get('name'))
+
+
+# def getDisplayNamesOfBirthdayPersons():
+#     ssl_context = ssl.create_default_context(cafile=certifi.where())
+#     slack_client = WebClient(decode(BOT_TOKEN), ssl=ssl_context)
+#     slack_client_without_bot_token = WebClient(decode(AUTH_TOKEN), ssl=ssl_context)
+#     # slack_client = WebClient(decode(BOT_TOKEN))
+#     # slack_client_without_bot_token = WebClient(decode(AUTH_TOKEN))
+#     slack_client.rtm_connect()
+#     user_list_str = slack_client.users_list()
+#     users = user_list_str.get('members')
+#     for user in users:
+#         try:
+#             status = user.get('deleted')
+#             if status:
+#                 continue
+#             is_bot = user.get('is_bot')
+#             if is_bot:
+#                 continue
+#             user_id = user.get('id')
+#             name = user.get('name')
+#             first_name = user.get('profile').get('first_name')
+#             user_info = slack_client_without_bot_token.users_profile_get(user=user_id)
+#             bday_string = user_info.get('profile').get('fields').get('XfNVGXDAS1').get('value')
+#             date_object = datetime.strptime(bday_string, BIRTHDAY_FORMAT).date()
+#             day = date_object.day
+#             month = date_object.month
+#
+#             if month == getCurrentMonth() and day == getCurrentDay():
+#                 birthday_persons['<@'+user_id+'>'] = first_name
+#         except AttributeError:
+#             print('User %s has not set birth date' % name)
+#             continue
+#         except ValueError:
+#             print('Invalid date format : %s , moving on ' % bday_string)
+#             continue
 
 
 def postBirthdayWishes():
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     slack_client = WebClient(decode(BOT_TOKEN), ssl=ssl_context)
-    # slack_client = WebClient(decode(BOT_TOKEN))
     slack_client.rtm_connect()
     for id, first_name in birthday_persons.items():
         random_number = random.randint(0, len(MODIFIED_BIRTHDAY_WISHES)-1)
@@ -71,35 +142,31 @@ def postBirthdayWishes():
         image_url = BIRTHDAY_IMAGE_URLS[random_number]
         message = template.replace("REPLACE_WITH_WISH", birthday_wish)
         message = message.replace("REPLACE_WITH_IMAGE_URL", image_url)
-        # message = message % (first_name, id)
+        message = message % (first_name, id)
         slack_client.chat_postMessage(
             channel=CHANNEL_NAME,
             blocks=message)
 
-    # random_number = random.randint(0, len(MODIFIED_BIRTHDAY_WISHES)-1)
-    # birthday_wish = MODIFIED_BIRTHDAY_WISHES[random_number]
-    # random_number = random.randint(0, len(BIRTHDAY_IMAGE_URLS) - 1)
-    # image_url = BIRTHDAY_IMAGE_URLS[random_number]
-    # message = template.replace("REPLACE_WITH_WISH", birthday_wish)
-    # message = message.replace("REPLACE_WITH_IMAGE_URL", image_url)
-    # # message = message % (first_name, id)
-    # idd = 'UK085LHE0'
-    # namee = 'Sushant'
-    # message = message % (namee, idd)
-    # slack_client.chat_postMessage(
-    #     channel=CHANNEL_NAME,
-    #     blocks=message)
 
-
-BIRTHDAY_FORMAT = '%Y-%m-%d'
-
-# settings for TestVagrant
-AUTH_TOKEN = 'eG94cC0xMDE4OTEyNzU5MS02NDYyNzc2OTc0NzYtNTE4MzI1NjgxMTk1Mi1jMzk2MTNjOTQxZmM0YmVlODUzZjA5YmZmODA2MWQzNg=='
-BOT_TOKEN = 'eG94Yi0xMDE4OTEyNzU5MS03OTAzMTM3OTc2MTktY0RiSVh1YnB1OXA5Y3Q0WEJLcHZjOGNk'
-
-
+# Configurations
+BIRTHDAY_FORMAT = '%d-%b-%Y'
 # CHANNEL_NAME = 'general'
 CHANNEL_NAME = 'testing-bday-slackbot'
+
+# Settings for Slack
+# AUTH_TOKEN = 'eG94cC0xMDE4OTEyNzU5MS02NDYyNzc2OTc0NzYtNTE4MzI1NjgxMTk1Mi1jMzk2MTNjOTQxZmM0YmVlODUzZjA5YmZmODA2MWQzNg=='
+BOT_TOKEN = 'eG94Yi0xMDE4OTEyNzU5MS03OTAzMTM3OTc2MTktY0RiSVh1YnB1OXA5Y3Q0WEJLcHZjOGNk'
+
+# Settings for Zoho
+CLIENT_ID = 'MTAwMC5PNkJLRzA0WDgwU0U1TEUwVlpVSjdIMUIwNThOUEI='
+CLIENT_SECRET = 'ZWU2Zjc1OTFmOTY1M2M2Y2U2MmY2OTY2ZDUyNmQ2NmE3ODE2NDBjODNm'
+ACCESS_TOKEN = ''
+REFRESH_TOKEN = 'MTAwMC45NTFjMzUwZmFmY2UxYWE4Njk3MDFhZWEwZjYyZDEzNC41NDk4OWJhYTVmZTgwYzljNGNkNmYwYTczNjU5MTc1Nw=='
+
+# Zoho Endpoints
+TOKEN_API = 'https://accounts.zoho.com/oauth/v2/token'
+EMPLOYEE_RECORD_API = 'https://people.zoho.com/people/api/forms/P_EmployeeView/records'
+
 
 template = ("["
 	"{"
@@ -167,9 +234,13 @@ BIRTHDAY_WISHES = [
     'Wishing you the loveliest, most joyful birthday ever! Happy Birthday.',
     'Happy birthday! Wishing you a splendid year ahead. May peace and happiness always be with you.'
 ]
-MODIFIED_BIRTHDAY_WISHES = [wish + " @channel Let us all wish %s a great birthday. :birthday: - %s " for wish in BIRTHDAY_WISHES]
+# MODIFIED_BIRTHDAY_WISHES = [wish + " @channel Let us all wish %s a great birthday. :birthday: - %s " for wish in BIRTHDAY_WISHES]
+MODIFIED_BIRTHDAY_WISHES = [wish + " Let us all wish %s a great birthday. :birthday: - %s " for wish in BIRTHDAY_WISHES]
 birthday_persons = {}
+birthday_persons_emails = []
 
 BIRTHDAY_WISHES = []            # This is to clear data from an unused list
-getDisplayNamesOfBirthdayPersons()
+
+getDisplayNamesOfBirthdayPersonsFromZoho()
+fetchSlackUserIdOfBirthdayPersons()
 postBirthdayWishes()
