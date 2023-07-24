@@ -33,7 +33,7 @@ def generateAccessTokenFromRefreshToken():
     return response.json().get('access_token')
 
 
-def getDisplayNamesOfBirthdayPersonsFromZoho():
+def getDisplayNamesOfAnniversaryPersonsFromZoho():
     url = EMPLOYEE_RECORD_API
     access_token = generateAccessTokenFromRefreshToken()
     headers = {'Accept': 'application/json', 'Authorization': 'Zoho-oauthtoken %s' % access_token}
@@ -42,17 +42,17 @@ def getDisplayNamesOfBirthdayPersonsFromZoho():
     for user in users:
         employeeID = user.get('EmployeeID')
         if (employeeID.startswith('C') and employeeID[1:].isnumeric()) or employeeID.isnumeric():       # Employee id of constructors start with C
-            bday_string = user.get('Birth Date')
+            date_of_joining = user.get('Date of joining')
             email_id = user.get('Email ID')
-            date_object = datetime.strptime(bday_string, BIRTHDAY_FORMAT).date()
+            date_object = datetime.strptime(date_of_joining, DATE_FORMAT).date()
             day = date_object.day
             month = date_object.month
 
             if month == getCurrentMonth() and day == getCurrentDay():
-                birthday_persons_emails.append(email_id)
+                anniversary_persons_emails.append(email_id)
 
 
-def fetchSlackUserIdOfBirthdayPersons():
+def fetchSlackUserIdOfAnniversaryPersons():
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     slack_client = WebClient(decode(BOT_TOKEN), ssl=ssl_context)
     slack_client.rtm_connect()
@@ -60,10 +60,10 @@ def fetchSlackUserIdOfBirthdayPersons():
     users = user_list_str.get('members')
     for user in users:
         email = user.get('profile').get('email')
-        if birthday_persons_emails.count(email) > 0:
+        if anniversary_persons_emails.count(email) > 0:
             user_id = user.get('id')
             first_name = user.get('profile').get('first_name')
-            birthday_persons['<@'+user_id+'>'] = first_name
+            anniversary_persons['<@' + user_id + '>'] = first_name
 
 
 
@@ -129,15 +129,15 @@ def fetchSlackUserIdOfBirthdayPersons():
 #             continue
 
 
-def postBirthdayWishes():
+def postAnniversaryWishes():
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     slack_client = WebClient(decode(BOT_TOKEN), ssl=ssl_context)
     slack_client.rtm_connect()
-    for id, first_name in birthday_persons.items():
-        random_number = random.randint(0, len(MODIFIED_BIRTHDAY_WISHES)-1)
-        birthday_wish = MODIFIED_BIRTHDAY_WISHES[random_number]
-        random_number = random.randint(0, len(BIRTHDAY_IMAGE_URLS) - 1)
-        image_url = BIRTHDAY_IMAGE_URLS[random_number]
+    for id, first_name in anniversary_persons.items():
+        random_number = random.randint(0, len(MODIFIED_ANNIVERSARY_WISHES) - 1)
+        birthday_wish = MODIFIED_ANNIVERSARY_WISHES[random_number]
+        random_number = random.randint(0, len(ANNIVERSARY_IMAGE_URLS) - 1)
+        image_url = ANNIVERSARY_IMAGE_URLS[random_number]
         message = template.replace("REPLACE_WITH_WISH", birthday_wish)
         message = message.replace("REPLACE_WITH_IMAGE_URL", image_url)
         message = message % (first_name, id)
@@ -147,7 +147,7 @@ def postBirthdayWishes():
 
 
 # Configurations
-BIRTHDAY_FORMAT = '%d-%b-%Y'
+DATE_FORMAT = '%d-%b-%Y'
 # CHANNEL_NAME = 'general'
 CHANNEL_NAME = 'testing-bday-slackbot'
 
@@ -171,11 +171,11 @@ template = ("["
 		"\"type\": \"image\","
 		"\"title\": {"
 			"\"type\": \"plain_text\","
-			"\"text\": \"Birthday Image\","
+			"\"text\": \"Anniversary Image\","
 			"\"emoji\": true"
 		"},"
 		"\"image_url\": \"REPLACE_WITH_IMAGE_URL\","
-		"\"alt_text\": \"Birthday Image\""
+		"\"alt_text\": \"Anniversary Image\""
 	"},"
     "{"
 		"\"type\": \"section\","
@@ -186,7 +186,7 @@ template = ("["
 	"}"
 "]")
 
-BIRTHDAY_IMAGE_URLS = [
+ANNIVERSARY_IMAGE_URLS = [
     'https://i.ibb.co/3F4djjD/pic-1.png',
     'https://i.ibb.co/wyWK5cX/pic-2.png',
     'https://i.ibb.co/L0wLRBb/pic-3.png',
@@ -210,7 +210,7 @@ BIRTHDAY_IMAGE_URLS = [
     'https://i.ibb.co/vL5vgY3/pic-21.png'
 ]
 
-BIRTHDAY_WISHES = [
+ANNIVERSARY_WISHES = [
     'Here’s to another year of success, health, and happiness. Happy Bday!',
     'We wish you a love and laughter-filled birthday. Keep being awesome.',
     'Happy birthday! Wishing you another year full of love, joy, and all your favourite things.',
@@ -232,13 +232,13 @@ BIRTHDAY_WISHES = [
     'Wishing you the loveliest, most joyful birthday ever! Happy Birthday.',
     'Happy birthday! Wishing you a splendid year ahead. May peace and happiness always be with you.'
 ]
-# MODIFIED_BIRTHDAY_WISHES = [wish + " @channel Let us all wish %s a great birthday. :birthday: - %s " for wish in BIRTHDAY_WISHES]
-MODIFIED_BIRTHDAY_WISHES = [wish + " Let us all wish %s a great birthday. :birthday: - %s " for wish in BIRTHDAY_WISHES]
-birthday_persons = {}
-birthday_persons_emails = []
+# MODIFIED_ANNIVERSARY_WISHES = [wish + " @channel Let us all wish %s a great birthday. :birthday: - %s " for wish in BIRTHDAY_WISHES]
+MODIFIED_ANNIVERSARY_WISHES = [wish + " Let us all wish %s a great birthday. :birthday: - %s " for wish in ANNIVERSARY_WISHES]
+anniversary_persons = {}
+anniversary_persons_emails = []
 
-BIRTHDAY_WISHES = []            # This is to clear data from an unused list
+ANNIVERSARY_WISHES = []            # This is to clear data from an unused list
 
-getDisplayNamesOfBirthdayPersonsFromZoho()
-fetchSlackUserIdOfBirthdayPersons()
-postBirthdayWishes()
+getDisplayNamesOfAnniversaryPersonsFromZoho()
+fetchSlackUserIdOfAnniversaryPersons()
+postAnniversaryWishes()
